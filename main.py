@@ -15,7 +15,6 @@ might have to be updated to match.
 """
 
 # TODO
-#! - avoid global except Exception. Be specific
 #! - cache fetched lang list
 
 class AutoUpdateLanguages:
