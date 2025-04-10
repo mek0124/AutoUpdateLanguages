@@ -24,33 +24,32 @@ class AutoUpdateLanguages:
         self.current_month = 0
 
     async def start(self):
-        print("Starting Language Update Loop... Please Wait...")
+        print("Starting AutoUpdateLanguage Task...")
 
-        while self.running: # keeps it running 24/7
-            print("Loop Running")
-            today = datetime.today()
-            print(f"Today's Date: {today}")
-            todays_month = today.month
-            print(f"Today's Month #: {todays_month}")
-            
-            print("\nChecking if it's still the same month")
-            if todays_month != self.current_month or self.current_month == 0:
-                print("It is now a new month")
-                print("Attempting to generate language list file")
-                try:
-                    print("Generating File... Please Wait...")
-                    self.generate_file()
-                    print("File Generated Successfully. Updating the stored current month variable for next check")
-                    self.current_month = todays_month
-                    print("Variable updated.")
-                except Exception as e:
-                    print("File Generation Failed. See Output\n")
-                    print(e)
-                    self.stop() # stop the program on error
-            tomorrow = today + timedelta(days=1)
-            print(f"\nStill the same month... Will Check Again on {tomorrow}...")
-            # sleep for 1 day
-            await asyncio.sleep(86400)
+        today = datetime.today()
+        todays_month = today.month
+        month = todays_month
+        day = today.day
+        year = today.year
+
+        next_month = datetime(year, month+1, day)
+
+        while self.running:
+            print(f"Today: {today}")
+
+            if todays_month != self.current_month:
+                print("New Month. Re-Populating Language File...")
+                self.generate_file()
+
+                print("Language file generated successfully")
+                print("Updating stored month value")
+                self.current_month = todays_month
+                print(f"Will update the file again on {next_month}")
+            else:
+                print(f"Still the same month. Will check again on {next_month}")
+                print("WARNING: If you are seeing this message, you should create a new issue on the repo's " \
+                "issues page. This means that the loop is not tracking correctly -mek")
+                self.stop()
 
         
         # extra check to ensure the program exits given an error
@@ -64,18 +63,19 @@ class AutoUpdateLanguages:
 
         # if the file doesn't exist, create it for the first time
         if not os.path.exists(file_path):
+            print("Creating language file for the first time... Please Wait...")
             with open(file_path, 'w+') as file:
                 for ul in current_unanitized_list:
                     for li in ul:
                         file.write(li.string)
+            
+            print("Language file created successfully")
         # overwrite the file each time after to avoid duplicates
         else:
             with open(file_path, 'w') as file:
                 for ul in current_unanitized_list:
                     for li in ul:
                         file.write(li.string)
-
-        print("finished updating lang file")
 
     def get_list_request(self):
         url = "https://programminglanguages.info/languages/"
@@ -111,14 +111,6 @@ class AutoUpdateLanguages:
     def stop(self):
         self.running = False
         sys.exit(0)
-
-    def update_month(self):
-        self.current_month += 1
-
-        if self.current_month > 12:
-            self.current_month = 0
-
-        return self.current_month
 
 
 if __name__ == '__main__':
