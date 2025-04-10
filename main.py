@@ -14,6 +14,9 @@ to pull the language list from. This URL can be replace, but the code
 might have to be updated to match.
 """
 
+# TODO
+#! - avoid global except Exception. Be specific
+#! - cache fetched lang list
 
 class AutoUpdateLanguages:
     def __init__(self):
