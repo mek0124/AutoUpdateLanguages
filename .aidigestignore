@@ -1,0 +1,4 @@
+env/
+dist/
+autoupdate_languages.egg-info/
+.pytest_cache/
