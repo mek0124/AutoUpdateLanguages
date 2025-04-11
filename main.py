@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from bs4 import BeautifulSoup
+from functools import lru_cache
 
 import requests
 import asyncio
@@ -16,11 +17,14 @@ might have to be updated to match.
 
 # TODO
 #! - cache fetched lang list
+#? - Filter out dead, eso-langs, and unused
 
 class AutoUpdateLanguages:
     def __init__(self):
         self.running = True
         self.current_month = 0
+        self.cache_langs = [] # memory cache
+        self.expire_days = 30
 
     async def start(self):
         print("Starting AutoUpdateLanguage Task...")
@@ -33,17 +37,21 @@ class AutoUpdateLanguages:
 
         next_month = datetime(year, month+1, day)
 
+        print(f"Today: {today}")
+
         while self.running:
-            print(f"Today: {today}")
+            if len(self.cache_langs) == 0:
+                self.get_list_request()
 
             if todays_month != self.current_month:
                 print("New Month. Re-Populating Language File...")
+                self.get_list_request()
                 self.generate_file()
 
-                print("Language file generated successfully")
-                print("Updating stored month value")
+                print(f"Updating stored month value to {todays_month}")
                 self.current_month = todays_month
                 print(f"Will update the file again on {next_month}")
+                await asyncio.sleep(86400)
             else:
                 print(f"Still the same month. Will check again on {next_month}")
                 print("WARNING: If you are seeing this message, you should create a new issue on the repo's " \
@@ -58,13 +66,11 @@ class AutoUpdateLanguages:
         curr_dir = os.path.abspath(os.path.dirname(__file__))
         file_path = os.path.join(curr_dir, "languages.txt")
 
-        current_unanitized_list = self.get_list_request()
-
         # if the file doesn't exist, create it for the first time
         if not os.path.exists(file_path):
             print("Creating language file for the first time... Please Wait...")
             with open(file_path, 'w+') as file:
-                for ul in current_unanitized_list:
+                for ul in self.cache_langs:
                     for li in ul:
                         file.write(li.string)
             
@@ -72,10 +78,11 @@ class AutoUpdateLanguages:
         # overwrite the file each time after to avoid duplicates
         else:
             with open(file_path, 'w') as file:
-                for ul in current_unanitized_list:
+                for ul in self.cache_langs:
                     for li in ul:
                         file.write(li.string)
 
+    @lru_cache(maxsize=None)
     def get_list_request(self):
         url = "https://programminglanguages.info/languages/"
         response = requests.get(url)
