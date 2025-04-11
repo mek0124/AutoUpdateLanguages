@@ -1,0 +1,5 @@
+Possible Bugs:
+  - When the file is created, there is an empty space placed at the beginning of the file. I can't figure out how to negate this
+
+Need To Fix:
+  - project outputs lang.txt file inside of .env/lib64/python3.12/site-packages/autoupdate_languages directory instead of actual project directory for user
